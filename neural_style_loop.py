@@ -115,8 +115,8 @@ def main():
 
     content_images = sorted(os.listdir("examples/content"))
     style_images = sorted(os.listdir("examples/style"))
-    range_sigma = [1e18, 1e19]  # , 1e21, 1e22, 1e25, 1e30]
-    range_sw = [1e10, 1e15]  # , 1e20, 1e25, 1e30, 1e40, 1e50]
+    range_sigma = [1e18, 1e19, 1e21, 1e22, 1e25, 1e30]
+    range_sw = [1e10, 1e15, 1e20, 1e25, 1e30, 1e40, 1e50]
 
     count = 0
     for c in content_images:
