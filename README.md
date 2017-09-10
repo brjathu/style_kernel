@@ -11,7 +11,7 @@ first run the directory.py file, which will create the required folder structure
 		 - ...
      
 then after download this mat file - [vgg197.mat](https://drive.google.com/open?id=0B4LqTUxVvVoXdHZpSVRfRGlBbEU)
-which contains the weights of the vgg19 network.
+which contains the weights of the vgg19 network. place it in the same location where neural_style_loop.py located (root directory)
 
 you can change the sigma of the exponential kernel weights by changing in the neural_style_loop.py line 118.
 
