@@ -21,5 +21,11 @@ you can change the style weights by changing in the neural_style_loop.py line 11
 
 `range_sw = [1e10, 1e15, 1e20, 1e25, 1e30, 1e40, 1e50]`
 
+then select the which you want to apply form `neural_style_loop.py` line 179
+- 0 -dotproduct 
+- 1 -exponential
+- 2 -mattern
+- 3 -polynomial
+
 after that run the code
 `python neural_style_loop.py`
