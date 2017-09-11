@@ -1,2 +1,5 @@
 imagenet-vgg-verydeep-197.mat
 final/*
+__pycache__/*
+Output.txt
+*.pyc
