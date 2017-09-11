@@ -1,0 +1,9 @@
+image name: 1-content_1-style_10000000000.0_1e+18.jpg
+image name: 1-content_1-style_10000000000.0_1e+18.jpg
+  content loss: 29105.1
+    style loss: 0.0179935
+       tv loss: 22454.5
+    total loss: 51559.6
+
+
+image name: 1-content_1-style_1000000000000000.0_1e+18.jpg
