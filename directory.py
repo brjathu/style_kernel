@@ -1,7 +1,7 @@
 import os
 
 
-range_sigma = [1e18, 1e19, 1e21, 1e22, 1e25, 1e30]
+range_sigma = [15000, 18000, 19000, 20000, 21000, 22000, 25000, 30000]
 
 os.system("mkdir final")
 os.system("mkdir final/dot")
