@@ -1,5 +1,3 @@
-# Copyright (c) 2015-2017 Anish Athalye. Released under GPLv3.
-
 import tensorflow as tf
 import numpy as np
 import scipy.io
@@ -18,6 +16,7 @@ VGG19_LAYERS = (
     'conv5_1', 'relu5_1', 'conv5_2', 'relu5_2', 'conv5_3',
     'relu5_3', 'conv5_4', 'relu5_4'
 )
+
 
 def load_net(data_path):
     data = scipy.io.loadmat(data_path)
@@ -49,19 +48,21 @@ def net_preloaded(weights, input_image, pooling):
     assert len(net) == len(VGG19_LAYERS)
     return net
 
+
 def _conv_layer(input, weights, bias):
     conv = tf.nn.conv2d(input, tf.constant(weights), strides=(1, 1, 1, 1),
-            padding='SAME')
+                        padding='SAME')
     return tf.nn.bias_add(conv, bias)
 
 
 def _pool_layer(input, pooling):
     if pooling == 'avg':
         return tf.nn.avg_pool(input, ksize=(1, 2, 2, 1), strides=(1, 2, 2, 1),
-                padding='SAME')
+                              padding='SAME')
     else:
         return tf.nn.max_pool(input, ksize=(1, 2, 2, 1), strides=(1, 2, 2, 1),
-                padding='SAME')
+                              padding='SAME')
+
 
 def preprocess(image, mean_pixel):
     return image - mean_pixel
