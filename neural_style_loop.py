@@ -116,7 +116,7 @@ def main():
     content_images = sorted(os.listdir("examples/content"))
     style_images = sorted(os.listdir("examples/style"))
     range_sigma = [1e18, 1e19, 1e21, 1e22, 1e25, 1e30]
-    range_sw = [1e10, 1e15, 1e20, 1e25, 1e30, 1e40, 1e50]
+    range_sw = [1e10, 1e15, 1e20, 1e25, 1e30, 1e35]
 
     count = 0
     for c in content_images:
@@ -197,15 +197,11 @@ def main():
                         checkpoint_iterations=options.checkpoint_iterations,
                         exp_sigma=sig
                     ):
-                        # output_file = None
-                        combined_rgb = image
-                        # if iteration is not None:
-                        #     if options.checkpoint_output:
-                        #         output_file = options.checkpoint_output % iteration
-                        # else:
-                        #     output_file = options.output
-                        # if output_file:
-                        imsave("final/exp/" + str(sig) + "/" + sname, combined_rgb)
+                        try:
+                            combined_rgb = image
+                            imsave("final/exp/" + str(sig) + "/" + sname, combined_rgb)
+                        except:
+                            print("error")
 
 
 def imread(path):

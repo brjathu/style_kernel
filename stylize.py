@@ -239,7 +239,11 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                         best_loss = this_loss
                         best = image.eval()
 
-                    img_out = vgg.unprocess(best.reshape(shape[1:]), vgg_mean_pixel)
+                    try:
+                        img_out = vgg.unprocess(best.reshape(shape[1:]), vgg_mean_pixel)
+                    except:
+                        print("uanlabe to result image due to given parameters")
+                        img_out = "no  image"
 
                     if preserve_colors and preserve_colors == True:
                         original_image = np.clip(content, 0, 255)
