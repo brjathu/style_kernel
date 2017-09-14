@@ -113,13 +113,16 @@ def main():
 
     content_images = sorted(os.listdir("examples/content"))
     style_images = sorted(os.listdir("examples/style"))
-    range_sigma = [15000, 18000, 19000, 20000, 21000, 22000, 25000, 30000]
-    range_sw = [1e10, 1e15, 1e20, 1e25, 1e30, 1e35]
+    range_sigma = [16000, 17000, 18000, 19000, 20000, 21000, 22000, 23000, 24000]
+    range_sw = [1e16, 1e17, 1e18, 1e19, 1e20, 1e21,1e22, 1e23, 1e24]
 
     count = 0
     for c in content_images:
         for s in style_images:
             for sig in range_sigma:
+                locat = os.listdir("final/exp/")
+                if(not(sig in locat)):
+                    os.system("mkdir final/exp/"+ str(sig))
                 for sw in range_sw:
                     c_image = imread("examples/content/" + c)
                     s_image = [imread("examples/style/" + s)]
@@ -179,7 +182,7 @@ def main():
                         content=c_image,
                         styles=s_image,
                         preserve_colors=options.preserve_colors,
-                        iterations=1000,
+                        iterations=10,
                         content_weight=options.content_weight,
                         content_weight_blend=options.content_weight_blend,
                         style_weight=sw,
