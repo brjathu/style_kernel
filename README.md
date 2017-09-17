@@ -20,5 +20,8 @@ then select the which you want to apply form `neural_style_loop.py` line 179
 - 2  - mattern
 - 3  - polynomial
 
+in line 22 of neural_style_loop.py file you can change the number of Iternation to print the statics.
+`PRINT_ITERATIONS = 50'
+
 after that run the code
-`python neural_style_loop.py`
+`python neural_style_loop.py --content examples/content/1-content.jpg examples/content/2-content.jpg`
