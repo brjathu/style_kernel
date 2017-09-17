@@ -1,14 +1,11 @@
 import os
-
 import numpy as np
 import scipy.misc
-
 from stylize import stylize
-
 import math
 from argparse import ArgumentParser
-
 from PIL import Image
+import pickle
 
 # default arguments
 CONTENT_WEIGHT = 5e0
@@ -21,15 +18,22 @@ BETA1 = 0.9
 BETA2 = 0.999
 EPSILON = 1e-08
 STYLE_SCALE = 1.0
-ITERATIONS = 1000
+ITERATIONS = 100
+PRINT_ITERATIONS = 10
 VGG_PATH = 'imagenet-vgg-verydeep-197.mat'
 POOLING = 'max'
+RANGE_SIGMA = [16000, 17000, 18000, 19000, 20000, 21000, 22000, 23000, 24000]
+RANGE_SW = [1e16, 1e17, 1e18, 1e19, 1e20, 1e21,1e22, 1e23, 1e24]
+# CONTENT_IMAGES = sorted(os.listdir("examples/content"))
+STYLE_IMAGES = sorted(os.listdir("examples/style"))
+
+
 
 
 def build_parser():
     parser = ArgumentParser()
     parser.add_argument('--content',
-                        dest='content', help='content image',
+                        dest='content',nargs='+', help='content image',
                         metavar='CONTENT')
     parser.add_argument('--styles',
                         dest='styles',
@@ -43,7 +47,7 @@ def build_parser():
                         metavar='ITERATIONS', default=ITERATIONS)
     parser.add_argument('--print-iterations', type=int,
                         dest='print_iterations', help='statistics printing frequency',
-                        metavar='PRINT_ITERATIONS')
+                        metavar='PRINT_ITERATIONS', default=PRINT_ITERATIONS)
     parser.add_argument('--checkpoint-output',
                         dest='checkpoint_output', help='checkpoint output format, e.g. output%%s.jpg',
                         metavar='OUTPUT')
@@ -110,21 +114,24 @@ def main():
 
     if not os.path.isfile(options.network):
         parser.error("Network %s does not exist. (Did you forget to download it?)" % options.network)
-
-    content_images = sorted(os.listdir("examples/content"))
-    style_images = sorted(os.listdir("examples/style"))
-    range_sigma = [16000, 17000, 18000, 19000, 20000, 21000, 22000, 23000, 24000]
-    range_sw = [1e16, 1e17, 1e18, 1e19, 1e20, 1e21,1e22, 1e23, 1e24]
-
+    CONTENT_IMAGES = options.content
     count = 0
-    for c in content_images:
-        for s in style_images:
-            for sig in range_sigma:
+    try:
+        os.system("mkdir final")
+        os.system("mkdir final/exp")
+        os.system("mkdir final/pickle_exp")
+    except:
+        print("dirctory stucture already exist")
+
+    for c in CONTENT_IMAGES:
+        for s in STYLE_IMAGES:
+            for sig in RANGE_SIGMA:
                 locat = os.listdir("final/exp/")
                 if(not(sig in locat)):
                     os.system("mkdir final/exp/"+ str(sig))
-                for sw in range_sw:
-                    c_image = imread("examples/content/" + c)
+                    os.system("mkdir final/pickle_exp/"+str(sig))
+                for sw in RANGE_SW:
+                    c_image = imread(c)
                     s_image = [imread("examples/style/" + s)]
 
                     width = options.width
@@ -167,22 +174,22 @@ def main():
                                      "parameter must contain `%s` (e.g. `foo%s.jpg`)")
 
                     count += 1
-                    sname = c[0:-4] + "_" + s[0:-4] + "_" + str(sw) + "_" + str(sig) + ".jpg"
-                    print("loop ==> " + str(count) + "of" + str(len(content_images) * len(style_images) * len(range_sigma) * len(range_sw)))
+                    sname = c.split("/")[-1][0:-4] + "_" + s[0:-4] + "_" + str(sw) + "_" + str(sig) + ".jpg"
+                    print("loop ==> " + str(count) + "of" + str(len(CONTENT_IMAGES) * len(STYLE_IMAGES) * len(RANGE_SIGMA) * len(RANGE_SW)))
 
-                    print("--content " + c + " --styles " + s + " --output final/exp/" + sname + " --iterations 1000 --style-weight " + str(sw))
+                    # print("--content " + c + " --styles " + s + " --output final/exp/" + sname + " --iterations 1000 --style-weight " + str(sw))
 
                     text_file = open("Output.txt", "a")
                     text_file.write("image name: " + sname + '\n')
                     text_file.close()
-                    for iteration, image in stylize(
+                    for iteration, image, dict in stylize(
                         network=options.network,
                         initial=initial,
                         initial_noiseblend=options.initial_noiseblend,
                         content=c_image,
                         styles=s_image,
                         preserve_colors=options.preserve_colors,
-                        iterations=1000,
+                        iterations=ITERATIONS,
                         content_weight=options.content_weight,
                         content_weight_blend=options.content_weight_blend,
                         style_weight=sw,
@@ -194,19 +201,20 @@ def main():
                         beta2=options.beta2,
                         epsilon=options.epsilon,
                         pooling=options.pooling,
-                        print_iterations=options.print_iterations,
+                        print_iterations=PRINT_ITERATIONS,
                         checkpoint_iterations=options.checkpoint_iterations,
-                        exp_sigma=sig
+                        exp_sigma=sig,
+                        text_to_print= sname
                     ):
+                        print(dict)
                         try:
                             combined_rgb = image
-                            files = os.listdir( "final/exp/" + str(sig) + "/")
-                            if( (combined_rgb) in files ):
-                                print("file already exit")
-                            else:
-                                imsave("final/exp/" + str(sig) + "/" + sname, combined_rgb)
+                            imsave("final/exp/" + str(sig) + "/" + sname, combined_rgb)
+                            with open("final/pickle_exp/"+str(sig)+"/"+sname[0:-4] + ".pkl", 'wb') as f:
+                                pickle.dump(dict, f)
+
                         except:
-                            print("error")
+                            print("============= ERROR =============")
 
 
 def imread(path):

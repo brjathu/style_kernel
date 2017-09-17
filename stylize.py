@@ -1,11 +1,12 @@
 import vgg
-
 import tensorflow as tf
 import numpy as np
-
 from sys import stderr
 import matplotlib.pylab as plt
 from PIL import Image
+
+
+tf.logging.set_verbosity(tf.logging.ERROR)
 
 CONTENT_LAYERS = ('relu4_2', 'relu5_2')
 STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
@@ -28,10 +29,10 @@ except NameError:
 
 def stylize(network, initial, initial_noiseblend, content, styles, preserve_colors, iterations,
         content_weight, content_weight_blend, style_weight, style_layer_weight_exp, style_blend_weights, tv_weight,
-        learning_rate, beta1, beta2, epsilon, pooling,
-        print_iterations=None, checkpoint_iterations=None , kernel=1, exp_sigma=20000):
+        learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, text_to_print,
+        print_iterations=None, checkpoint_iterations=None , kernel=1):
 
-    
+
 
     tf.logging.set_verbosity(tf.logging.INFO)
     """
@@ -43,7 +44,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
 
     :rtype: iterator[tuple[int|None,image]]
 
-    0 - dot product kernel 
+    0 - dot product kernel
     1 - exponential kernel
     2 - matern kernel
     3 - polynomial kernel
@@ -88,11 +89,11 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
             for layer in STYLE_LAYERS:
                 features = net[layer].eval(feed_dict={image: style_pre})
                 features = np.reshape(features, (-1, features.shape[3]))
-                                
+
                 # sqr = features.T*features.T
                 # dim = features.shape
 
-               
+
                 if(kernel==0):
                     gram2 =   np.matmul(features.T, features)/ features.size
                 elif(kernel==1):
@@ -102,12 +103,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 elif(kernel==3):
                     gram2 = gramPoly_np(features, 2) / features.size
 
-
-
-
-                print(features.shape,"diamention of feature\n")
-
-
+                # print(features.shape,"diamention of feature\n")
                 style_features[i][layer] = gram2
 
     initial_content_noise_coeff = 1.0 - initial_noiseblend
@@ -147,12 +143,12 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 layer = net[style_layer]
                 _, height, width, number = map(lambda i: i.value, layer.get_shape())
                 size = height * width * number
-                feats = tf.reshape(layer, (-1, number))                
+                feats = tf.reshape(layer, (-1, number))
 
                 style_gram = style_features[i][style_layer]
 
                 dim = feats.get_shape()
-                print(dim)
+                # print(dim)
 
                 sqr = tf.reduce_sum(tf.transpose(feats)*tf.transpose(feats),axis=1)
 
@@ -164,9 +160,9 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                     #mattern kernal
                     d2 =    tf.nn.relu(tf.transpose( tf.ones([dim[1],dim[1]])* sqr) + tf.ones([dim[1],dim[1]])* sqr - 2*tf.matmul(tf.transpose(feats), feats) );
                     if(v==2.5):
-                        gram =   sigMat**2 * (   tf.ones([dim[1],dim[1]]) + tf.sqrt(5.0) * tf.sqrt(d2) / rho   + 5 *  d2 / 3 / (rho**2) )   * tf.exp(-1 * tf.sqrt(5.0)  *  tf.sqrt(d2) / rho  ) /size 
+                        gram =   sigMat**2 * (   tf.ones([dim[1],dim[1]]) + tf.sqrt(5.0) * tf.sqrt(d2) / rho   + 5 *  d2 / 3 / (rho**2) )   * tf.exp(-1 * tf.sqrt(5.0)  *  tf.sqrt(d2) / rho  ) /size
                         #gram = tf.Print(gram, [gram], message="This is gram: ")
- 
+
                 style_losses.append(style_layers_weights[style_layer] * 2 * tf.nn.l2_loss(gram - style_gram) / style_gram.size)
 
             style_loss += style_weight * style_blend_weights[i] * reduce(tf.add, style_losses)
@@ -174,42 +170,33 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
         # total variation denoising
         tv_y_size = _tensor_size(image[:,1:,:,:])
         tv_x_size = _tensor_size(image[:,:,1:,:])
-        
+
         tv_loss = tv_weight * 2 * (
                 (tf.nn.l2_loss(image[:,1:,:,:] - image[:,:shape[1]-1,:,:]) /
                     tv_y_size) +
                 (tf.nn.l2_loss(image[:,:,1:,:] - image[:,:,:shape[2]-1,:]) /
                     tv_x_size))
 
-
-
-        aaa = image[:,1:,:,:] - image[:,:shape[1]-1,:,:]
-        bbb = tf.nn.l2_loss(image[:,:,1:,:] - image[:,:,:shape[2]-1,:])
-        ccc = (tf.nn.l2_loss(image[:,1:,:,:] - image[:,:shape[1]-1,:,:]) / tv_y_size)
-        ddd = (tf.nn.l2_loss(image[:,:,1:,:] - image[:,:,:shape[2]-1,:]) / tv_x_size)
-
-        
-        
         # overall loss
         loss = content_loss + style_loss + tv_loss
-        
+
         # optimizer setup
         # train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
         train_step = tf.train.AdamOptimizer(learning_rate, beta1, beta2, epsilon).minimize(loss)
 
-        def print_progress():
-            stderr.write('  content loss: %g\n' % content_loss.eval())
-            stderr.write('    style loss: %g\n' % style_loss.eval())
-            stderr.write('       tv loss: %g\n' % tv_loss.eval())
-            stderr.write('    total loss: %g\n' % loss.eval())
+        def print_progress(last_loss):
+            new_loss =loss.eval()
+            stderr.write('file ===>  %s \n' % text_to_print)
+            stderr.write('  content loss: %1.3e \t' % content_loss.eval())
+            stderr.write('    style loss: %1.3e \t' % style_loss.eval())
+            stderr.write('       tv loss: %1.3e \t' % tv_loss.eval())
+            stderr.write('    total loss: %1.3e \t' % new_loss)
+            stderr.write('    loss difference: %1.3e \t\n' % (last_loss - new_loss))
+            return new_loss
 
-
-            text_file = open("Output.txt", "a")
-            text_file.write('  content loss: %g\n' % content_loss.eval())
-            text_file.write('    style loss: %g\n' % style_loss.eval())
-            text_file.write('       tv loss: %g\n' % tv_loss.eval())
-            text_file.write('    total loss: %g\n\n\n' % loss.eval())
-            text_file.close()
+        def save_progress():
+            dict = {"content loss" : content_loss.eval(), "style loss" :style_loss.eval(), "tv loss":tv_loss.eval(), "total loss":loss.eval()}
+            return dict
 
         # optimization
         best_loss = float('inf')
@@ -217,20 +204,19 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             stderr.write('Optimization started...\n')
-            if (print_iterations and print_iterations != 0):
-                print_progress()
+            new_loss = 0
+            # if (print_iterations and print_iterations != 0):
+            #     print_progress()
             for i in range(iterations):
-                stderr.write('Iteration %4d/%4d\n' % (i + 1, iterations))
-                # print(sess.run(aaa),sess.run(bbb),sess.run(ccc),sess.run(ddd))
-                # print(sess.run(d2))
-                # print(sess.run(gram))
                 train_step.run()
 
                 last_step = (i == iterations - 1)
                 if last_step or (print_iterations and i % print_iterations == 0):
-                    print_progress()
+                    stderr.write('Iteration %4d/%4d\n' % (i + 1, iterations))
+                    new_loss = print_progress(new_loss)
 
                 if (checkpoint_iterations and i % checkpoint_iterations == 0) or last_step:
+                    dict = save_progress()
                     this_loss = loss.eval()
                     print(this_loss,"loss in each check point")
                     if this_loss < best_loss:
@@ -246,7 +232,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                     if preserve_colors and preserve_colors == True:
                         original_image = np.clip(content, 0, 255)
                         styled_image = np.clip(img_out, 0, 255)
-                        
+
 
                         # Luminosity transfer steps:
                         # 1. Convert stylized RGB->grayscale accoriding to Rec.601 luma (0.299, 0.587, 0.114)
@@ -278,7 +264,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
 
                     yield (
                         (None if last_step else i),
-                        img_out
+                        img_out, dict
                     )
 
 
