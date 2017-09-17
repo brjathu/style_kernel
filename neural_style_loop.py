@@ -182,7 +182,7 @@ def main():
                         content=c_image,
                         styles=s_image,
                         preserve_colors=options.preserve_colors,
-                        iterations=10,
+                        iterations=1000,
                         content_weight=options.content_weight,
                         content_weight_blend=options.content_weight_blend,
                         style_weight=sw,
@@ -200,7 +200,11 @@ def main():
                     ):
                         try:
                             combined_rgb = image
-                            imsave("final/exp/" + str(sig) + "/" + sname, combined_rgb)
+                            files = os.listdir( "final/exp/" + str(sig) + "/")
+                            if( (combined_rgb) in files ):
+                                print("file already exit")
+                            else:
+                                imsave("final/exp/" + str(sig) + "/" + sname, combined_rgb)
                         except:
                             print("error")
 
