@@ -18,12 +18,12 @@ BETA1 = 0.9
 BETA2 = 0.999
 EPSILON = 1e-08
 STYLE_SCALE = 1.0
-ITERATIONS = 1000
-PRINT_ITERATIONS = 50
+ITERATIONS = 10
+PRINT_ITERATIONS = 1
 VGG_PATH = 'imagenet-vgg-verydeep-197.mat'
 POOLING = 'max'
-RANGE_SIGMA = [16000, 17000, 18000, 19000, 20000, 21000, 22000, 23000, 24000]
-RANGE_SW = [1e16, 1e17, 1e18, 1e19, 1e20, 1e21,1e22, 1e23, 1e24]
+RANGE_SIGMA = [5000, 10000, 15000, 20000, 25000, 30000]
+RANGE_SW = [1e19, 5e19, 1e20,5e20, 1e21, 5e21]
 # CONTENT_IMAGES = sorted(os.listdir("examples/content"))
 STYLE_IMAGES = sorted(os.listdir("examples/style"))
 
@@ -125,12 +125,13 @@ def main():
 
     for c in CONTENT_IMAGES:
         for s in STYLE_IMAGES:
-            for sig in RANGE_SIGMA:
+            for sw in RANGE_SW:
                 locat = os.listdir("final/exp/")
-                if(not(sig in locat)):
-                    os.system("mkdir final/exp/"+ str(sig))
-                    os.system("mkdir final/pickle_exp/"+str(sig))
-                for sw in RANGE_SW:
+                if(not(sw in locat)):
+                    os.system("mkdir final/exp/"+ str(sw))
+                    os.system("mkdir final/pickle_exp/"+str(sw))
+
+                for sig in RANGE_SIGMA:
                     c_image = imread(c)
                     s_image = [imread("examples/style/" + s)]
 
@@ -174,18 +175,15 @@ def main():
                                      "parameter must contain `%s` (e.g. `foo%s.jpg`)")
 
                     count += 1
-                    sname = c.split("/")[-1][0:-4] + "_" + s[0:-4] + "_" + str(sw) + "_" + str(sig) + ".jpg"
+                    sname = c.split("/")[-1][0:-4] + "_" + s[0:-4] + "_" + str(sig) + "_" + str(sw) + ".jpg"
                     print("loop ==> " + str(count) + "of" + str(len(CONTENT_IMAGES) * len(STYLE_IMAGES) * len(RANGE_SIGMA) * len(RANGE_SW)))
 
                     # print("--content " + c + " --styles " + s + " --output final/exp/" + sname + " --iterations 1000 --style-weight " + str(sw))
-                    files_in_folder = os.listdir("final/exp/" + str(sig) + "/")
+                    files_in_folder = os.listdir("final/exp/" + str(sw) + "/")
                     if(sname in files_in_folder):
                         print("file already exist")
                         continue
 
-                    text_file = open("Output.txt", "a")
-                    text_file.write("image name: " + sname + '\n')
-                    text_file.close()
                     for iteration, image, dict in stylize(
                         network=options.network,
                         initial=initial,
@@ -213,8 +211,8 @@ def main():
                         print(dict)
                         try:
                             combined_rgb = image
-                            imsave("final/exp/" + str(sig) + "/" + sname, combined_rgb)
-                            with open("final/pickle_exp/"+str(sig)+"/"+sname[0:-4] + ".pkl", 'wb') as f:
+                            imsave("final/exp/" + str(sw) + "/" + sname, combined_rgb)
+                            with open("final/pickle_exp/"+str(sw)+"/"+sname[0:-4] + ".pkl", 'wb') as f:
                                 pickle.dump(dict, f)
 
                         except:
