@@ -18,8 +18,8 @@ BETA1 = 0.9
 BETA2 = 0.999
 EPSILON = 1e-08
 STYLE_SCALE = 1.0
-ITERATIONS = 1000
-PRINT_ITERATIONS = 50
+ITERATIONS = 10
+PRINT_ITERATIONS = 1
 VGG_PATH = 'imagenet-vgg-verydeep-197.mat'
 POOLING = 'max'
 RANGE_SIGMA = [16000, 17000, 18000, 19000, 20000, 21000, 22000, 23000, 24000]
@@ -178,6 +178,10 @@ def main():
                     print("loop ==> " + str(count) + "of" + str(len(CONTENT_IMAGES) * len(STYLE_IMAGES) * len(RANGE_SIGMA) * len(RANGE_SW)))
 
                     # print("--content " + c + " --styles " + s + " --output final/exp/" + sname + " --iterations 1000 --style-weight " + str(sw))
+                    files_in_folder = os.listdir("final/exp/" + str(sig) + "/")
+                    if(sname in files_in_folder):
+                        print("file already exist")
+                        continue
 
                     text_file = open("Output.txt", "a")
                     text_file.write("image name: " + sname + '\n')
