@@ -136,18 +136,18 @@ def main():
     count = 0
     try:
         os.system("mkdir final")
-        os.system("mkdir final/exp")
-        os.system("mkdir final/pickle_exp")
+        os.system("mkdir final/mattern")
+        os.system("mkdir final/mattern_pickle")
     except:
         print("dirctory stucture already exist")
 
     for c in CONTENT_IMAGES:
         for s in STYLE_IMAGES:
             for sw in RANGE_SW:
-                locat = os.listdir("final/exp/")
+                locat = os.listdir("final/mattern/")
                 if(not(sw in locat)):
-                    os.system("mkdir final/exp/" + str(sw))
-                    os.system("mkdir final/pickle_exp/" + str(sw))
+                    os.system("mkdir final/mattern/" + str(sw))
+                    os.system("mkdir final/mattern_pickle/" + str(sw))
 
                 for sig in RANGE_SIGMA:
                     c_image = imread(c)
@@ -197,7 +197,7 @@ def main():
                     print("loop ==> " + str(count) + "of" + str(len(CONTENT_IMAGES) * len(STYLE_IMAGES) * len(RANGE_SIGMA) * len(RANGE_SW)))
 
                     # print("--content " + c + " --styles " + s + " --output final/exp/" + sname + " --iterations 1000 --style-weight " + str(sw))
-                    files_in_folder = os.listdir("final/exp/" + str(sw) + "/")
+                    files_in_folder = os.listdir("final/mattern/" + str(sw) + "/")
                     if(sname in files_in_folder):
                         print("file already exist")
                         continue
@@ -232,8 +232,8 @@ def main():
                         print(dict)
                         try:
                             combined_rgb = image
-                            imsave("final/exp/" + str(sw) + "/" + sname, combined_rgb)
-                            with open("final/pickle_exp/" + str(sw) + "/" + sname[0:-4] + ".pkl", 'wb') as f:
+                            imsave("final/mattern/" + str(sw) + "/" + sname, combined_rgb)
+                            with open("final/mattern_pickle/" + str(sw) + "/" + sname[0:-4] + ".pkl", 'wb') as f:
                                 pickle.dump(dict, f)
 
                         except:
