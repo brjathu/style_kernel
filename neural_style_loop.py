@@ -28,7 +28,7 @@ RANGE_SW = [1e10, 1e11, 1e12, 1e13, 1e14]
 # CONTENT_IMAGES = sorted(os.listdir("examples/content"))
 STYLE_IMAGES = sorted(os.listdir("examples/style"))
 KERNEL = 2
-TARGET_WIDTH = 256
+# TARGET_WIDTH = 256
 
 
 """
