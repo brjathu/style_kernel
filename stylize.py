@@ -16,8 +16,6 @@ STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
 
 
 #mattern kernal
-rho = 10000
-sigMat = 1e4
 v=2.5
 
 
@@ -29,8 +27,8 @@ except NameError:
 
 def stylize(network, initial, initial_noiseblend, content, styles, preserve_colors, iterations,
         content_weight, content_weight_blend, style_weight, style_layer_weight_exp, style_blend_weights, tv_weight,
-        learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, text_to_print,
-        print_iterations=None, checkpoint_iterations=None , kernel=1):
+        learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, mat_sigma, mat_rho, text_to_print,
+        print_iterations=None, checkpoint_iterations=None , kernel=2):
 
 
 
@@ -99,7 +97,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 elif(kernel==1):
                     gram2 = gramExp_np(features, exp_sigma)/ features.size    #exponential kernal
                 elif(kernel==2):
-                    gram2 = gramMatten_np(features, sigMat , v , rho) / features.size     #Mattern kernal
+                    gram2 = gramMatten_np(features, mat_sigma , v , mat_rho) / features.size     #Mattern kernal
                 elif(kernel==3):
                     gram2 = gramPoly_np(features, 2) / features.size
 
@@ -159,9 +157,12 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 elif(kernel==2):
                     #mattern kernal
                     d2 =    tf.nn.relu(tf.transpose( tf.ones([dim[1],dim[1]])* sqr) + tf.ones([dim[1],dim[1]])* sqr - 2*tf.matmul(tf.transpose(feats), feats) );
-                    if(v==2.5):
-                        gram =   sigMat**2 * (   tf.ones([dim[1],dim[1]]) + tf.sqrt(5.0) * tf.sqrt(d2) / rho   + 5 *  d2 / 3 / (rho**2) )   * tf.exp(-1 * tf.sqrt(5.0)  *  tf.sqrt(d2) / rho  ) /size
-                        #gram = tf.Print(gram, [gram], message="This is gram: ")
+                    if(v==0.5):
+                        gram =   mat_sigma**2 * tf.exp(-1 * tf.sqrt(d2) / mat_rho  ) /size
+                    elif(v==1.5):
+                        gram =   mat_sigma**2 * (   tf.ones([dim[1],dim[1]]) + tf.sqrt(3.0) * tf.sqrt(d2) / mat_rho   )   * tf.exp(-1 * tf.sqrt(3.0)  *  tf.sqrt(d2) / mat_rho  ) /size
+                    elif(v==2.5):
+                        gram =   mat_sigma**2 * (   tf.ones([dim[1],dim[1]]) + tf.sqrt(5.0) * tf.sqrt(d2) / mat_rho   + 5 *  d2 / 3 / (mat_rho**2) )   * tf.exp(-1 * tf.sqrt(5.0)  *  tf.sqrt(d2) / mat_rho  ) /size
 
                 style_losses.append(style_layers_weights[style_layer] * 2 * tf.nn.l2_loss(gram - style_gram) / style_gram.size)
 
@@ -301,18 +302,17 @@ def gramPoly_np(features,sigma, C=0):
     #Polynomial kernal
     return (np.matmul(features.T, features) + C)**d
 
-def gramMatten_np(features,sigma, v , rho):
+def gramMatten_np(features,sigma, v , mat_rho):
     #matttern kernel
     sqr = features.T*features.T
     dim = features.shape
     d2 = abs( (np.ones((dim[1],dim[1]), dtype=np.int)*np.sum(sqr,axis=1)).T + (np.ones((dim[1],dim[1]), dtype=np.int)*np.sum(sqr,axis=1)) - 2*(np.matmul(features.T,features)))
-    print(d2.shape)
     if(v==0.5):
-        return sigma**2 * np.exp(-1*np.sqrt(d2) / rho)
+        return sigma**2 * np.exp(-1*np.sqrt(d2) / mat_rho)
     if(v==1.5):
-        return sigma**2 * (np.ones((dim[1],dim[1]),dtype=np.int) + np.sqrt(3) * np.sqrt(d2) / rho ) * np.exp(-1*np.sqrt(3) * np.sqrt(d2) / rho)
+        return sigma**2 * (np.ones((dim[1],dim[1]),dtype=np.int) + np.sqrt(3) * np.sqrt(d2) / mat_rho ) * np.exp(-1*np.sqrt(3) * np.sqrt(d2) / mat_rho)
     if(v==2.5):
-        return sigma**2 * (np.ones((dim[1],dim[1]),dtype=np.int) + np.sqrt(5) * np.sqrt(d2) / rho  +  5 * d2 / 3 / rho**2 ) * np.exp(-1*np.sqrt(5) * np.sqrt(d2) / rho)
+        return sigma**2 * (np.ones((dim[1],dim[1]),dtype=np.int) + np.sqrt(5) * np.sqrt(d2) / mat_rho  +  5 * d2 / 3 / mat_rho**2 ) * np.exp(-1*np.sqrt(5) * np.sqrt(d2) / mat_rho)
 
 
 

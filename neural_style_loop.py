@@ -19,21 +19,39 @@ BETA2 = 0.999
 EPSILON = 1e-08
 STYLE_SCALE = 1.0
 ITERATIONS = 1000
-PRINT_ITERATIONS = 50
+PRINT_ITERATIONS = 10
 VGG_PATH = 'imagenet-vgg-verydeep-197.mat'
 POOLING = 'max'
-RANGE_SIGMA = [5000, 10000, 15000, 20000, 25000, 30000]
-RANGE_SW = [1e19, 5e19, 1e20,5e20, 1e21, 5e21]
+RANGE_SIGMA = [50, 100, 500, 1000, 2000, 5000]
+# RANGE_SW = [1e19, 5e19, 1e20,5e20, 1e21, 5e21]
+RANGE_SW = [1e10, 1e11, 1e12, 1e13, 1e14]
 # CONTENT_IMAGES = sorted(os.listdir("examples/content"))
 STYLE_IMAGES = sorted(os.listdir("examples/style"))
+KERNEL = 2
+TARGET_WIDTH = 256
 
 
+"""
+    Stylize images.
+
+    This function yields tuples (iteration, image); `iteration` is None
+    if this is the final image (the last iteration).  Other tuples are yielded
+    every `checkpoint_iterations` iterations.
+
+    :rtype: iterator[tuple[int|None,image]]
+
+    0 - dot product kernel
+    1 - exponential kernel
+    2 - matern kernel
+    3 - polynomial kernel
+
+    """
 
 
 def build_parser():
     parser = ArgumentParser()
     parser.add_argument('--content',
-                        dest='content',nargs='+', help='content image',
+                        dest='content', nargs='+', help='content image',
                         metavar='CONTENT')
     parser.add_argument('--styles',
                         dest='styles',
@@ -128,14 +146,14 @@ def main():
             for sw in RANGE_SW:
                 locat = os.listdir("final/exp/")
                 if(not(sw in locat)):
-                    os.system("mkdir final/exp/"+ str(sw))
-                    os.system("mkdir final/pickle_exp/"+str(sw))
+                    os.system("mkdir final/exp/" + str(sw))
+                    os.system("mkdir final/pickle_exp/" + str(sw))
 
                 for sig in RANGE_SIGMA:
                     c_image = imread(c)
                     s_image = [imread("examples/style/" + s)]
 
-                    width = options.width
+                    width = TARGET_WIDTH
                     if width is not None:
                         new_shape = (int(math.floor(float(c_image.shape[0]) /
                                                     c_image.shape[1] * width)), width)
@@ -206,13 +224,16 @@ def main():
                         print_iterations=PRINT_ITERATIONS,
                         checkpoint_iterations=options.checkpoint_iterations,
                         exp_sigma=sig,
-                        text_to_print= sname
+                        mat_sigma=1e2,
+                        mat_rho=sig,
+                        text_to_print=sname,
+                        kernel=KERNEL
                     ):
                         print(dict)
                         try:
                             combined_rgb = image
                             imsave("final/exp/" + str(sw) + "/" + sname, combined_rgb)
-                            with open("final/pickle_exp/"+str(sw)+"/"+sname[0:-4] + ".pkl", 'wb') as f:
+                            with open("final/pickle_exp/" + str(sw) + "/" + sname[0:-4] + ".pkl", 'wb') as f:
                                 pickle.dump(dict, f)
 
                         except:
