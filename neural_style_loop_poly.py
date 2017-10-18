@@ -18,17 +18,17 @@ BETA1 = 0.9
 BETA2 = 0.999
 EPSILON = 1e-08
 STYLE_SCALE = 1.0
-ITERATIONS = 1000
+ITERATIONS = 500
 PRINT_ITERATIONS = 10
 VGG_PATH = 'imagenet-vgg-verydeep-197.mat'
 POOLING = 'max'
 RANGE_SIGMA = [1]  # [50, 100, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000]
 # RANGE_SW = [1e19, 5e19, 1e20,5e20, 1e21, 5e21]
-RANGE_SW = [1e10, 1e11, 5e11, 1e12, 1e13, 1e14]
+RANGE_SW = [1e-7, 1e-8, 1e-9, 1e-10, 1e-11]  # [1e-10, 1e-15, 1e-20, 1e-25, 1e-30, 1e-35]
 # CONTENT_IMAGES = sorted(os.listdir("examples/content"))
 STYLE_IMAGES = sorted(os.listdir("examples/style"))
 KERNEL = 3
-RANGE_D = [1, 2, 3, 4, 5, 6, 7]
+RANGE_D = [2, 3, 4, 5, 6]  # [2, 3, 4, 5, 6, 7]
 # TARGET_WIDTH = 256
 
 
@@ -154,7 +154,7 @@ def main():
                     c_image = imread(c)
                     s_image = [imread("examples/style/" + s)]
 
-                    width = None
+                    width = 200
                     if width is not None:
                         new_shape = (int(math.floor(float(c_image.shape[0]) /
                                                     c_image.shape[1] * width)), width)

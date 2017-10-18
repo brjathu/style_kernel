@@ -96,7 +96,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 elif(kernel == 2):
                     gram2 = gramMatten_np(features, mat_sigma, v, mat_rho) / features.size  # Mattern kernal
                 elif(kernel == 3):
-                    gram2 = gramPoly_np(features, d=d) / features.size
+                    gram2 = gramPoly_np(features, d=d)
 
                 # print(features.shape,"diamention of feature\n")
                 style_features[i][layer] = gram2
@@ -163,7 +163,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                         gram = mat_sigma**2 * (tf.ones([dim[1], dim[1]]) + tf.sqrt(5.0) * tf.sqrt(d2) / mat_rho + 5 * d2 / 3 / (mat_rho**2)) * tf.exp(-1 * tf.sqrt(5.0) * tf.sqrt(d2) / mat_rho) / size
                 elif(kernel == 3):
                     # polynomial kernal
-                    gram = (tf.matmul(tf.transpose(feats), feats))**d / size
+                    gram = (tf.matmul(tf.transpose(feats), feats) / size)**d
 
                 style_losses.append(style_layers_weights[style_layer] * 2 * tf.nn.l2_loss(gram - style_gram) / style_gram.size)
 
@@ -294,7 +294,7 @@ def gramExp_np(features, sigma):
 
 def gramPoly_np(features, C=0, d=1):
     # Polynomial kernal
-    return (np.matmul(features.T, features) + C)**d
+    return ((np.matmul(features.T, features) / features.size + C)**d)
 
 
 def gramMatten_np(features, sigma, v, mat_rho):
