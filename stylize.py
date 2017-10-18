@@ -292,7 +292,7 @@ def gramExp_np(features, sigma):
                                                                                                      dtype=np.int) * np.sum(sqr, axis=1)) - 2 * (np.matmul(features.T, features))) / 2 / sigma / sigma)
 
 
-def gramPoly_np(features, C=0, d):
+def gramPoly_np(features, C=0, d=1):
     # Polynomial kernal
     return (np.matmul(features.T, features) + C)**d
 
