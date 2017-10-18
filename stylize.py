@@ -11,12 +11,12 @@ tf.logging.set_verbosity(tf.logging.ERROR)
 CONTENT_LAYERS = ('relu4_2', 'relu5_2')
 STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
 
-#exponential kernal
+# exponential kernal
 # sig = 30000
 
 
-#mattern kernal
-v=2.5
+# mattern kernal
+v = 2.5
 
 
 try:
@@ -26,11 +26,9 @@ except NameError:
 
 
 def stylize(network, initial, initial_noiseblend, content, styles, preserve_colors, iterations,
-        content_weight, content_weight_blend, style_weight, style_layer_weight_exp, style_blend_weights, tv_weight,
-        learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, mat_sigma, mat_rho, text_to_print,
-        print_iterations=None, checkpoint_iterations=None , kernel=2):
-
-
+            content_weight, content_weight_blend, style_weight, style_layer_weight_exp, style_blend_weights, tv_weight,
+            learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, mat_sigma, mat_rho, text_to_print,
+            print_iterations=None, checkpoint_iterations=None, kernel=3, d=2):
 
     tf.logging.set_verbosity(tf.logging.INFO)
     """
@@ -91,15 +89,14 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 # sqr = features.T*features.T
                 # dim = features.shape
 
-
-                if(kernel==0):
-                    gram2 =   np.matmul(features.T, features)/ features.size
-                elif(kernel==1):
-                    gram2 = gramExp_np(features, exp_sigma)/ features.size    #exponential kernal
-                elif(kernel==2):
-                    gram2 = gramMatten_np(features, mat_sigma , v , mat_rho) / features.size     #Mattern kernal
-                elif(kernel==3):
-                    gram2 = gramPoly_np(features, 2) / features.size
+                if(kernel == 0):
+                    gram2 = np.matmul(features.T, features) / features.size
+                elif(kernel == 1):
+                    gram2 = gramExp_np(features, exp_sigma) / features.size  # exponential kernal
+                elif(kernel == 2):
+                    gram2 = gramMatten_np(features, mat_sigma, v, mat_rho) / features.size  # Mattern kernal
+                elif(kernel == 3):
+                    gram2 = gramPoly_np(features, d=d) / features.size
 
                 # print(features.shape,"diamention of feature\n")
                 style_features[i][layer] = gram2
@@ -129,8 +126,8 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
         content_losses = []
         for content_layer in CONTENT_LAYERS:
             content_losses.append(content_layers_weights[content_layer] * content_weight * (2 * tf.nn.l2_loss(
-                    net[content_layer] - content_features[content_layer]) /
-                    content_features[content_layer].size))
+                net[content_layer] - content_features[content_layer]) /
+                content_features[content_layer].size))
         content_loss += reduce(tf.add, content_losses)
 
         # style loss
@@ -148,35 +145,39 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 dim = feats.get_shape()
                 # print(dim)
 
-                sqr = tf.reduce_sum(tf.transpose(feats)*tf.transpose(feats),axis=1)
+                sqr = tf.reduce_sum(tf.transpose(feats) * tf.transpose(feats), axis=1)
 
-                if(kernel==0):
-                    gram =(tf.matmul(tf.transpose(feats), feats) )/ size
-                elif(kernel==1):
-                    gram = tf.exp(-1* (tf.transpose( tf.ones([dim[1],dim[1]])* sqr) + tf.ones([dim[1],dim[1]])* sqr - 2*tf.matmul(tf.transpose(feats), feats) ) /2/(exp_sigma*exp_sigma))/size  #exponetial kernal
-                elif(kernel==2):
-                    #mattern kernal
-                    d2 =    tf.nn.relu(tf.transpose( tf.ones([dim[1],dim[1]])* sqr) + tf.ones([dim[1],dim[1]])* sqr - 2*tf.matmul(tf.transpose(feats), feats) );
-                    if(v==0.5):
-                        gram =   mat_sigma**2 * tf.exp(-1 * tf.sqrt(d2) / mat_rho  ) /size
-                    elif(v==1.5):
-                        gram =   mat_sigma**2 * (   tf.ones([dim[1],dim[1]]) + tf.sqrt(3.0) * tf.sqrt(d2) / mat_rho   )   * tf.exp(-1 * tf.sqrt(3.0)  *  tf.sqrt(d2) / mat_rho  ) /size
-                    elif(v==2.5):
-                        gram =   mat_sigma**2 * (   tf.ones([dim[1],dim[1]]) + tf.sqrt(5.0) * tf.sqrt(d2) / mat_rho   + 5 *  d2 / 3 / (mat_rho**2) )   * tf.exp(-1 * tf.sqrt(5.0)  *  tf.sqrt(d2) / mat_rho  ) /size
+                if(kernel == 0):
+                    gram = (tf.matmul(tf.transpose(feats), feats)) / size
+                elif(kernel == 1):
+                    gram = tf.exp(-1 * (tf.transpose(tf.ones([dim[1], dim[1]]) * sqr) + tf.ones([dim[1], dim[1]]) * sqr - 2 *
+                                        tf.matmul(tf.transpose(feats), feats)) / 2 / (exp_sigma * exp_sigma)) / size  # exponetial kernal
+                elif(kernel == 2):
+                    # mattern kernal
+                    d2 = tf.nn.relu(tf.transpose(tf.ones([dim[1], dim[1]]) * sqr) + tf.ones([dim[1], dim[1]]) * sqr - 2 * tf.matmul(tf.transpose(feats), feats))
+                    if(v == 0.5):
+                        gram = mat_sigma**2 * tf.exp(-1 * tf.sqrt(d2) / mat_rho) / size
+                    elif(v == 1.5):
+                        gram = mat_sigma**2 * (tf.ones([dim[1], dim[1]]) + tf.sqrt(3.0) * tf.sqrt(d2) / mat_rho) * tf.exp(-1 * tf.sqrt(3.0) * tf.sqrt(d2) / mat_rho) / size
+                    elif(v == 2.5):
+                        gram = mat_sigma**2 * (tf.ones([dim[1], dim[1]]) + tf.sqrt(5.0) * tf.sqrt(d2) / mat_rho + 5 * d2 / 3 / (mat_rho**2)) * tf.exp(-1 * tf.sqrt(5.0) * tf.sqrt(d2) / mat_rho) / size
+                elif(kernel == 3):
+                    # polynomial kernal
+                    gram = (tf.matmul(tf.transpose(feats), feats))**d / size
 
                 style_losses.append(style_layers_weights[style_layer] * 2 * tf.nn.l2_loss(gram - style_gram) / style_gram.size)
 
             style_loss += style_weight * style_blend_weights[i] * reduce(tf.add, style_losses)
 
         # total variation denoising
-        tv_y_size = _tensor_size(image[:,1:,:,:])
-        tv_x_size = _tensor_size(image[:,:,1:,:])
+        tv_y_size = _tensor_size(image[:, 1:, :, :])
+        tv_x_size = _tensor_size(image[:, :, 1:, :])
 
         tv_loss = tv_weight * 2 * (
-                (tf.nn.l2_loss(image[:,1:,:,:] - image[:,:shape[1]-1,:,:]) /
-                    tv_y_size) +
-                (tf.nn.l2_loss(image[:,:,1:,:] - image[:,:,:shape[2]-1,:]) /
-                    tv_x_size))
+            (tf.nn.l2_loss(image[:, 1:, :, :] - image[:, :shape[1] - 1, :, :]) /
+             tv_y_size) +
+            (tf.nn.l2_loss(image[:, :, 1:, :] - image[:, :, :shape[2] - 1, :]) /
+             tv_x_size))
 
         # overall loss
         loss = content_loss + style_loss + tv_loss
@@ -186,7 +187,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
         train_step = tf.train.AdamOptimizer(learning_rate, beta1, beta2, epsilon).minimize(loss)
 
         def print_progress(last_loss):
-            new_loss =loss.eval()
+            new_loss = loss.eval()
             stderr.write('file ===>  %s \n' % text_to_print)
             stderr.write('  content loss: %1.3e \t' % content_loss.eval())
             stderr.write('    style loss: %1.3e \t' % style_loss.eval())
@@ -196,7 +197,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
             return new_loss
 
         def save_progress():
-            dict = {"content loss" : content_loss.eval(), "style loss" :style_loss.eval(), "tv loss":tv_loss.eval(), "total loss":loss.eval()}
+            dict = {"content loss": content_loss.eval(), "style loss": style_loss.eval(), "tv loss": tv_loss.eval(), "total loss": loss.eval()}
             return dict
 
         # optimization
@@ -219,7 +220,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 if (checkpoint_iterations and i % checkpoint_iterations == 0) or last_step:
                     dict = save_progress()
                     this_loss = loss.eval()
-                    print(this_loss,"loss in each check point")
+                    print(this_loss, "loss in each check point")
                     if this_loss < best_loss:
                         best_loss = this_loss
                         best = image.eval()
@@ -230,10 +231,9 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                         print("uanlabe to result image due to given parameters")
                         img_out = "no  image"
 
-                    if preserve_colors and preserve_colors == True:
+                    if preserve_colors and preserve_colors:
                         original_image = np.clip(content, 0, 255)
                         styled_image = np.clip(img_out, 0, 255)
-
 
                         # Luminosity transfer steps:
                         # 1. Convert stylized RGB->grayscale accoriding to Rec.601 luma (0.299, 0.587, 0.114)
@@ -262,7 +262,6 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                         # 5
                         img_out = np.array(Image.fromarray(combined_yuv, 'YCbCr').convert('RGB'))
 
-
                     yield (
                         (None if last_step else i),
                         img_out, dict
@@ -273,8 +272,9 @@ def _tensor_size(tensor):
     from operator import mul
     return reduce(mul, (d.value for d in tensor.get_shape()), 1)
 
+
 def rgb2gray(rgb):
-    return np.dot(rgb[...,:3], [0.299, 0.587, 0.114])
+    return np.dot(rgb[..., :3], [0.299, 0.587, 0.114])
 
 
 def gray2rgb(gray):
@@ -284,36 +284,30 @@ def gray2rgb(gray):
     return rgb
 
 
-
-
-
-
-
-
-
-
-def gramExp_np(features,sigma):
-    #exponential kernal
-    sqr = features.T*features.T
+def gramExp_np(features, sigma):
+    # exponential kernal
+    sqr = features.T * features.T
     dim = features.shape
-    return np.exp(-1*( (np.ones((dim[1],dim[1]), dtype=np.int)*np.sum(sqr,axis=1)).T + (np.ones((dim[1],dim[1]), dtype=np.int)*np.sum(sqr,axis=1)) - 2*(np.matmul(features.T,features)))/2/sigma/sigma)
+    return np.exp(-1 * ((np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)).T + (np.ones((dim[1], dim[1]),
+                                                                                                     dtype=np.int) * np.sum(sqr, axis=1)) - 2 * (np.matmul(features.T, features))) / 2 / sigma / sigma)
 
-def gramPoly_np(features,sigma, C=0):
-    #Polynomial kernal
+
+def gramPoly_np(features, C=0, d):
+    # Polynomial kernal
     return (np.matmul(features.T, features) + C)**d
 
-def gramMatten_np(features,sigma, v , mat_rho):
-    #matttern kernel
-    sqr = features.T*features.T
+
+def gramMatten_np(features, sigma, v, mat_rho):
+    # matttern kernel
+    sqr = features.T * features.T
     dim = features.shape
-    d2 = abs( (np.ones((dim[1],dim[1]), dtype=np.int)*np.sum(sqr,axis=1)).T + (np.ones((dim[1],dim[1]), dtype=np.int)*np.sum(sqr,axis=1)) - 2*(np.matmul(features.T,features)))
-    if(v==0.5):
-        return sigma**2 * np.exp(-1*np.sqrt(d2) / mat_rho)
-    if(v==1.5):
-        return sigma**2 * (np.ones((dim[1],dim[1]),dtype=np.int) + np.sqrt(3) * np.sqrt(d2) / mat_rho ) * np.exp(-1*np.sqrt(3) * np.sqrt(d2) / mat_rho)
-    if(v==2.5):
-        return sigma**2 * (np.ones((dim[1],dim[1]),dtype=np.int) + np.sqrt(5) * np.sqrt(d2) / mat_rho  +  5 * d2 / 3 / mat_rho**2 ) * np.exp(-1*np.sqrt(5) * np.sqrt(d2) / mat_rho)
+    d2 = abs((np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)).T + (np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)) - 2 * (np.matmul(features.T, features)))
+    if(v == 0.5):
+        return sigma**2 * np.exp(-1 * np.sqrt(d2) / mat_rho)
+    if(v == 1.5):
+        return sigma**2 * (np.ones((dim[1], dim[1]), dtype=np.int) + np.sqrt(3) * np.sqrt(d2) / mat_rho) * np.exp(-1 * np.sqrt(3) * np.sqrt(d2) / mat_rho)
+    if(v == 2.5):
+        return sigma**2 * (np.ones((dim[1], dim[1]), dtype=np.int) + np.sqrt(5) * np.sqrt(d2) / mat_rho + 5 * d2 / 3 / mat_rho**2) * np.exp(-1 * np.sqrt(5) * np.sqrt(d2) / mat_rho)
 
 
-
-#polynomial kernel
+# polynomial kernel
