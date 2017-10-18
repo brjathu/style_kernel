@@ -151,7 +151,7 @@ def main():
                     os.system("mkdir final/dot_pickle/" + str(sw))
 
                 for sig in RANGE_SIGMA:
-                    c_image = imread(c)
+                    c_image = imread("examples/content/" + c)
                     s_image = [imread("examples/style/" + s)]
 
                     width = None
