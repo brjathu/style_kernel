@@ -27,8 +27,8 @@ except NameError:
 
 def stylize(network, initial, initial_noiseblend, content, styles, preserve_colors, iterations,
             content_weight, content_weight_blend, style_weight, style_layer_weight_exp, style_blend_weights, tv_weight,
-            learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, mat_sigma, mat_rho, text_to_print,
-            print_iterations=None, checkpoint_iterations=None, kernel=3, d=2):
+            learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, mat_sigma, mat_rho,  text_to_print,
+            print_iterations=None, checkpoint_iterations=None, kernel=3, d=2, gamma_rho=1, gamma=1, rational_rho=1, alpha=1):
 
     tf.logging.set_verbosity(tf.logging.INFO)
     """
@@ -92,13 +92,18 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 if(kernel == 0):
                     gram2 = np.matmul(features.T, features) / features.size
                 elif(kernel == 1):
-                    gram2 = gramExp_np(features, exp_sigma) / features.size  # exponential kernal
+                    gram2 = gramSquaredExp_np(features, exp_sigma) / features.size  # exponential kernal
                 elif(kernel == 2):
                     gram2 = gramMatten_np(features, mat_sigma, v, mat_rho) / features.size  # Mattern kernal
                 elif(kernel == 3):
-                    gram2 = gramPoly_np(features, d=d)
+                    print(d)
+                    gram2 = gramPoly_np(features, C=0, d=d) / features.size
+                elif(kernel == 4):
+                    gram2 = gramGammaExp_np(features, gamma_rho, gamma) / features.size
+                elif(kernel == 4):
+                    gram2 = gramRatioanlQuad_np(features, rational_rho, alpha) / features.size
 
-                # print(features.shape,"diamention of feature\n")
+                    # print(features.shape,"diamention of feature\n")
                 style_features[i][layer] = gram2
 
     initial_content_noise_coeff = 1.0 - initial_noiseblend
@@ -163,7 +168,13 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                         gram = mat_sigma**2 * (tf.ones([dim[1], dim[1]]) + tf.sqrt(5.0) * tf.sqrt(d2) / mat_rho + 5 * d2 / 3 / (mat_rho**2)) * tf.exp(-1 * tf.sqrt(5.0) * tf.sqrt(d2) / mat_rho) / size
                 elif(kernel == 3):
                     # polynomial kernal
-                    gram = (tf.matmul(tf.transpose(feats), feats) / size)**d
+                    gram = (tf.matmul(tf.transpose(feats), feats))**d / size
+                elif(kernel == 4):
+                    # gamma exponental kernal
+                    gram = tf.exp(-1 * (tf.sqrt(d2) / gamma_rho)**gamma) / size
+                elif(kernel == 5):
+                    # gamma exponental kernal
+                    gram = (1 + (d2 / rational_rho**2 / 2 / alpha))**(-1 * alpha) / size
 
                 style_losses.append(style_layers_weights[style_layer] * 2 * tf.nn.l2_loss(gram - style_gram) / style_gram.size)
 
@@ -284,7 +295,7 @@ def gray2rgb(gray):
     return rgb
 
 
-def gramExp_np(features, sigma):
+def gramSquaredExp_np(features, sigma):
     # exponential kernal
     sqr = features.T * features.T
     dim = features.shape
@@ -292,9 +303,10 @@ def gramExp_np(features, sigma):
                                                                                                      dtype=np.int) * np.sum(sqr, axis=1)) - 2 * (np.matmul(features.T, features))) / 2 / sigma / sigma)
 
 
-def gramPoly_np(features, C=0, d=1):
+def gramPoly_np(features, C=0, d=2):
+    print(d)
     # Polynomial kernal
-    return ((np.matmul(features.T, features) / features.size + C)**d)
+    return (np.matmul(features.T, features) + C)**d
 
 
 def gramMatten_np(features, sigma, v, mat_rho):
@@ -310,4 +322,17 @@ def gramMatten_np(features, sigma, v, mat_rho):
         return sigma**2 * (np.ones((dim[1], dim[1]), dtype=np.int) + np.sqrt(5) * np.sqrt(d2) / mat_rho + 5 * d2 / 3 / mat_rho**2) * np.exp(-1 * np.sqrt(5) * np.sqrt(d2) / mat_rho)
 
 
-# polynomial kernel
+def gramGammaExp_np(features, gamma_rho, gamma):
+    sqr = features.T * features.T
+    dim = features.shape
+    d2 = abs((np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)).T + (np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)) - 2 * (np.matmul(features.T, features)))
+    d = np.sqrt(d2)
+    return np.exp(-1 * (d / gamma_rho)**gamma)
+
+
+def gramRatioanlQuad_np(features, rational_rho, alpha):
+    sqr = features.T * features.T
+    dim = features.shape
+    d2 = abs((np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)).T + (np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)) - 2 * (np.matmul(features.T, features)))
+    # d = np.sqrt(d2)
+    return np.exp(1 + (d2 / rational_rho**2 / 2 / alpha))**(-1 * alpha)

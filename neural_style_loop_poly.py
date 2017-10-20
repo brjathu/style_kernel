@@ -18,21 +18,17 @@ BETA1 = 0.9
 BETA2 = 0.999
 EPSILON = 1e-08
 STYLE_SCALE = 1.0
-ITERATIONS = 1000
+ITERATIONS = 500
 PRINT_ITERATIONS = 10
 VGG_PATH = 'imagenet-vgg-verydeep-197.mat'
 POOLING = 'max'
 RANGE_SIGMA = [1]  # [50, 100, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000]
 # RANGE_SW = [1e19, 5e19, 1e20,5e20, 1e21, 5e21]
-RANGE_SW = [1e-5, 5e-5, 1e-6, 5e-6, 1e-7, 5e-7, 1e-8]  # [1e-10, 1e-15, 1e-20, 1e-25, 1e-30, 1e-35]
-
-# for p = 2 [1e-5, 5e-5, 1e-6, 5e-6, 1e-7, 5e-7, 1e-8]
-# for p = 3 [1e-13, 5e-13, 1e-14, 5e-14, 1e-15, 5e-15, 1e-16]
-# for p = 4 [1e-23, 5e-23, 1e-24, 5e-24, 1e-25, 5e-25, 1e-26]
+RANGE_SW = [1e-20, 1e-21, 1e-22, 1e-23, 1e-24, 1e-25, 1e-30, 1e-35, 1e-40]  # [1e-10, 1e-15, 1e-20, 1e-25, 1e-30, 1e-35]
 # CONTENT_IMAGES = sorted(os.listdir("examples/content"))
 STYLE_IMAGES = sorted(os.listdir("examples/style"))
 KERNEL = 3
-RANGE_D = [2]  # [2, 3, 4, 5, 6, 7]
+RANGE_D = [4, 5, 6]  # [2, 3, 4, 5, 6, 7]
 # TARGET_WIDTH = 256
 
 
@@ -137,8 +133,7 @@ def main():
 
     if not os.path.isfile(options.network):
         parser.error("Network %s does not exist. (Did you forget to download it?)" % options.network)
-    # CONTENT_IMAGES = options.content
-    CONTENT_IMAGES = sorted(os.listdir("examples/content"))
+    CONTENT_IMAGES = options.content
     count = 0
     try:
         os.system("mkdir final")
@@ -156,8 +151,7 @@ def main():
                     os.system("mkdir final/poly_pickle/" + str(sw))
 
                 for poly_d in RANGE_D:
-                    # c_image = imread(c)
-                    c_image = imread("examples/content/" + c)
+                    c_image = imread(c)
                     s_image = [imread("examples/style/" + s)]
 
                     width = None

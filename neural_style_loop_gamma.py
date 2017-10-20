@@ -22,13 +22,13 @@ ITERATIONS = 500
 PRINT_ITERATIONS = 10
 VGG_PATH = 'imagenet-vgg-verydeep-197.mat'
 POOLING = 'max'
-RANGE_SIGMA = [1]
+RANGE_SIGMA = [100, 500, 1000, 2000, , 5000]
 # RANGE_SW = [1e19, 5e19, 1e20,5e20, 1e21, 5e21]
-RANGE_SW = [1e-2, 1e-1, 1e1, 5e1, 1e2, 1e3]  # [1e10, 5e10, 1e11, 5e11, 1e12]
+RANGE_SW = [1e10, 1e11, 1e12, 1e13]  # [1e-10, 1e-15, 1e-20, 1e-25, 1e-30, 1e-35]
 # CONTENT_IMAGES = sorted(os.listdir("examples/content"))
 STYLE_IMAGES = sorted(os.listdir("examples/style"))
-KERNEL = 0
-RANGE_D = [1, 2, 3, 4, 5, 6, 7]
+KERNEL = 3
+g = 1.1
 # TARGET_WIDTH = 256
 
 
@@ -133,25 +133,25 @@ def main():
 
     if not os.path.isfile(options.network):
         parser.error("Network %s does not exist. (Did you forget to download it?)" % options.network)
-    CONTENT_IMAGES = sorted(os.listdir("examples/content"))
+    CONTENT_IMAGES = options.content
     count = 0
     try:
         os.system("mkdir final")
-        os.system("mkdir final/dot")
-        os.system("mkdir final/dot_pickle")
+        os.system("mkdir final/gamma")
+        os.system("mkdir final/gamma_pickle")
     except:
         print("dirctory stucture already exist")
 
     for c in CONTENT_IMAGES:
         for s in STYLE_IMAGES:
             for sw in RANGE_SW:
-                locat = os.listdir("final/dot/")
+                locat = os.listdir("final/gamma/")
                 if(not(sw in locat)):
-                    os.system("mkdir final/dot/" + str(sw))
-                    os.system("mkdir final/dot_pickle/" + str(sw))
+                    os.system("mkdir final/gamma/" + str(sw))
+                    os.system("mkdir final/gamma_pickle/" + str(sw))
 
                 for sig in RANGE_SIGMA:
-                    c_image = imread("examples/content/" + c)
+                    c_image = imread(c)
                     s_image = [imread("examples/style/" + s)]
 
                     width = None
@@ -197,8 +197,8 @@ def main():
                     sname = c.split("/")[-1][0:-4] + "_" + s[0:-4] + "_" + str(sig) + "_" + str(sw) + ".jpg"
                     print("loop ==> " + str(count) + "of" + str(len(CONTENT_IMAGES) * len(STYLE_IMAGES) * len(RANGE_SIGMA) * len(RANGE_SW)))
 
-                    # print("--content " + c + " --styles " + s + " --output final/dot/" + sname + " --iterations 1000 --style-weight " + str(sw))
-                    files_in_folder = os.listdir("final/dot/" + str(sw) + "/")
+                    # print("--content " + c + " --styles " + s + " --output final/exp/" + sname + " --iterations 1000 --style-weight " + str(sw))
+                    files_in_folder = os.listdir("final/gamma/" + str(sw) + "/")
                     if(sname in files_in_folder):
                         print("file already exist")
                         continue
@@ -224,11 +224,11 @@ def main():
                         pooling=options.pooling,
                         print_iterations=PRINT_ITERATIONS,
                         checkpoint_iterations=options.checkpoint_iterations,
-                        exp_sigma=sig,
+                        exp_sigma=500,
                         mat_sigma=1e2,
-                        mat_rho=sig,
+                        mat_rho=500,
                         gamma_rho=sig,
-                        gamma=1,
+                        gamma=g,
                         text_to_print=sname,
                         kernel=KERNEL,
                         d=1
@@ -236,8 +236,8 @@ def main():
                         print(dict)
                         try:
                             combined_rgb = image
-                            imsave("final/dot/" + str(sw) + "/" + sname, combined_rgb)
-                            with open("final/dot_pickle/" + str(sw) + "/" + sname[0:-4] + ".pkl", 'wb') as f:
+                            imsave("final/gamma/" + str(sw) + "/" + sname, combined_rgb)
+                            with open("final/gamma_pickle/" + str(sw) + "/" + sname[0:-4] + ".pkl", 'wb') as f:
                                 pickle.dump(dict, f)
 
                         except:
