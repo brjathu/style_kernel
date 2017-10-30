@@ -27,7 +27,7 @@ except NameError:
 
 def stylize(network, initial, initial_noiseblend, content, styles, preserve_colors, iterations,
             content_weight, content_weight_blend, style_weight, style_layer_weight_exp, style_blend_weights, tv_weight,
-            learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, mat_sigma, mat_rho, text_to_print,
+            learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, mat_sigma, mat_rho,  text_to_print,
             print_iterations=None, checkpoint_iterations=None, kernel=3, d=2, gamma_rho=1, gamma=1, rational_rho=1, alpha=1):
 
     tf.logging.set_verbosity(tf.logging.INFO)
@@ -100,7 +100,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                     gram2 = gramPoly_np(features, C=0, d=d) / features.size
                 elif(kernel == 4):
                     gram2 = gramGammaExp_np(features, gamma_rho, gamma) / features.size
-                elif(kernel == 5):
+                elif(kernel == 4):
                     gram2 = gramRatioanlQuad_np(features, rational_rho, alpha) / features.size
 
                     # print(features.shape,"diamention of feature\n")
@@ -151,7 +151,6 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                 # print(dim)
 
                 sqr = tf.reduce_sum(tf.transpose(feats) * tf.transpose(feats), axis=1)
-                d2 = tf.nn.relu(tf.transpose(tf.ones([dim[1], dim[1]]) * sqr) + tf.ones([dim[1], dim[1]]) * sqr - 2 * tf.matmul(tf.transpose(feats), feats))
 
                 if(kernel == 0):
                     gram = (tf.matmul(tf.transpose(feats), feats)) / size
@@ -160,6 +159,7 @@ def stylize(network, initial, initial_noiseblend, content, styles, preserve_colo
                                         tf.matmul(tf.transpose(feats), feats)) / 2 / (exp_sigma * exp_sigma)) / size  # exponetial kernal
                 elif(kernel == 2):
                     # mattern kernal
+                    d2 = tf.nn.relu(tf.transpose(tf.ones([dim[1], dim[1]]) * sqr) + tf.ones([dim[1], dim[1]]) * sqr - 2 * tf.matmul(tf.transpose(feats), feats))
                     if(v == 0.5):
                         gram = mat_sigma**2 * tf.exp(-1 * tf.sqrt(d2) / mat_rho) / size
                     elif(v == 1.5):
