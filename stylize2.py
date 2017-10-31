@@ -27,7 +27,7 @@ except NameError:
 
 def stylize(network, initial, initial_noiseblend, content, styles, preserve_colors, iterations,
             content_weight, content_weight_blend, style_weight, style_layer_weight_exp, style_blend_weights, tv_weight,
-            learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, mat_sigma, mat_rho,  text_to_print,
+            learning_rate, beta1, beta2, epsilon, pooling, exp_sigma, mat_sigma, mat_rho, text_to_print,
             print_iterations=None, checkpoint_iterations=None, kernel=3, d=2, gamma_rho=1, gamma=1, rational_rho=1, alpha=1):
 
     tf.logging.set_verbosity(tf.logging.INFO)
@@ -300,7 +300,12 @@ def gramSquaredExp_np(features, sigma):
     sqr = features.T * features.T
     dim = features.shape
     return np.exp(-1 * ((np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)).T + (np.ones((dim[1], dim[1]),
-                                                                                                     dtype=np.int) * np.sum(sqr, axis=1)) - 2 * (np.matmul(features.T, features))) / 2 / sigma / sigma)
+                                                                                                     dtype=np.int) * np.sum(sqr, axis=1)) - 2 * (np.matmul(features.T,
+                                                                                                                                                           features))) / 2 / sigma / sigma)
+    # return np.exp(-1 * (np.ones((dim[1], dim[1]), dtype=np.int) *
+    # np.sum(sqr, axis=1)).T / 2 / sigma**2) + np.exp(-1 * np.ones((dim[1],
+    # dim[1]), dtype=np.int) * np.sum(sqr, axis=1) / 2 / sigma**2) - 2 *
+    # np.exp( -1*np.matmul(features.T, features))) / 2 / sigma / sigma)
 
 
 def gramPoly_np(features, C=0, d=2):

@@ -335,4 +335,4 @@ def gramRatioanlQuad_np(features, rational_rho, alpha):
     dim = features.shape
     d2 = abs((np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)).T + (np.ones((dim[1], dim[1]), dtype=np.int) * np.sum(sqr, axis=1)) - 2 * (np.matmul(features.T, features)))
     # d = np.sqrt(d2)
-    return np.exp(1 + (d2 / rational_rho**2 / 2 / alpha))**(-1 * alpha)
+    return (1 + (d2 / rational_rho**2 / 2 / alpha))**(-1 * alpha)

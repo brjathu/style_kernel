@@ -18,17 +18,17 @@ BETA1 = 0.9
 BETA2 = 0.999
 EPSILON = 1e-08
 STYLE_SCALE = 1.0
-ITERATIONS = 500
+ITERATIONS = 1000
 PRINT_ITERATIONS = 10
 VGG_PATH = 'imagenet-vgg-verydeep-197.mat'
 POOLING = 'max'
-RANGE_SIGMA = [100, 1000, 5000, 10000, 15000, 20000, 30000]
-# RANGE_SW = [1e19, 5e19, 1e20,5e20, 1e21, 5e21]
-RANGE_SW = [1e19, 1e20, 1e21, 1e22]  # [1e-10, 1e-15, 1e-20, 1e-25, 1e-30, 1e-35]
+RANGE_SIGMA = [100, 200, 500, 1000, 2000]
+RANGE_SW = [1e18, 5e18, 1e19, 5e19, 1e20]  # [1e-10, 1e-15, 1e-20, 1e-25, 1e-30, 1e-35]
 # CONTENT_IMAGES = sorted(os.listdir("examples/content"))
 STYLE_IMAGES = sorted(os.listdir("examples/style"))
 KERNEL = 5
 alpha = 2
+name_kernel = "rational_2"
 # TARGET_WIDTH = 256
 
 
@@ -138,18 +138,18 @@ def main():
     count = 0
     try:
         os.system("mkdir final")
-        os.system("mkdir final/rational")
-        os.system("mkdir final/rational_pickle")
+        os.system("mkdir final/" + name_kernel + "")
+        os.system("mkdir final/" + name_kernel + "_pickle")
     except:
         print("dirctory stucture already exist")
 
     for c in CONTENT_IMAGES:
         for s in STYLE_IMAGES:
             for sw in RANGE_SW:
-                locat = os.listdir("final/rational/")
+                locat = os.listdir("final/" + name_kernel + "/")
                 if(not(sw in locat)):
-                    os.system("mkdir final/rational/" + str(sw))
-                    os.system("mkdir final/rational_pickle/" + str(sw))
+                    os.system("mkdir final/" + name_kernel + "/" + str(sw))
+                    os.system("mkdir final/" + name_kernel + "_pickle/" + str(sw))
 
                 for sig in RANGE_SIGMA:
                     c_image = imread(c)
@@ -199,7 +199,7 @@ def main():
                     print("loop ==> " + str(count) + "of" + str(len(CONTENT_IMAGES) * len(STYLE_IMAGES) * len(RANGE_SIGMA) * len(RANGE_SW)))
 
                     # print("--content " + c + " --styles " + s + " --output final/exp/" + sname + " --iterations 1000 --style-weight " + str(sw))
-                    files_in_folder = os.listdir("final/rational/" + str(sw) + "/")
+                    files_in_folder = os.listdir("final/" + name_kernel + "/" + str(sw) + "/")
                     if(sname in files_in_folder):
                         print("file already exist")
                         continue
@@ -237,8 +237,8 @@ def main():
                         print(dict)
                         try:
                             combined_rgb = image
-                            imsave("final/rational/" + str(sw) + "/" + sname, combined_rgb)
-                            with open("final/rational_pickle/" + str(sw) + "/" + sname[0:-4] + ".pkl", 'wb') as f:
+                            imsave("final/" + name_kernel + "/" + str(sw) + "/" + sname, combined_rgb)
+                            with open("final/" + name_kernel + "_pickle/" + str(sw) + "/" + sname[0:-4] + ".pkl", 'wb') as f:
                                 pickle.dump(dict, f)
 
                         except:
