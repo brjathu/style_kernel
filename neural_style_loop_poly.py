@@ -33,6 +33,7 @@ RANGE_SW = [1e-5, 5e-5, 1e-6, 5e-6, 1e-7, 5e-7, 1e-8]  # [1e-10, 1e-15, 1e-20, 1
 STYLE_IMAGES = sorted(os.listdir("examples/style"))
 KERNEL = 3
 RANGE_D = [2]  # [2, 3, 4, 5, 6, 7]
+name_kernel = "poly2"
 # TARGET_WIDTH = 256
 
 
@@ -142,18 +143,18 @@ def main():
     count = 0
     try:
         os.system("mkdir final")
-        os.system("mkdir final/poly")
-        os.system("mkdir final/poly_pickle")
+        os.system("mkdir final/" + name_kernel + "")
+        os.system("mkdir final/" + name_kernel + "_pickle")
     except:
         print("dirctory stucture already exist")
 
     for c in CONTENT_IMAGES:
         for s in STYLE_IMAGES:
             for sw in RANGE_SW:
-                locat = os.listdir("final/poly/")
+                locat = os.listdir("final/" + name_kernel + "/")
                 if(not(sw in locat)):
-                    os.system("mkdir final/poly/" + str(sw))
-                    os.system("mkdir final/poly_pickle/" + str(sw))
+                    os.system("mkdir final/" + name_kernel + "/" + str(sw))
+                    os.system("mkdir final/" + name_kernel + "_pickle/" + str(sw))
 
                 for poly_d in RANGE_D:
                     # c_image = imread(c)
@@ -204,7 +205,7 @@ def main():
                     print("loop ==> " + str(count) + "of" + str(len(CONTENT_IMAGES) * len(STYLE_IMAGES) * len(RANGE_SIGMA) * len(RANGE_SW)))
 
                     # print("--content " + c + " --styles " + s + " --output final/exp/" + sname + " --iterations 1000 --style-weight " + str(sw))
-                    files_in_folder = os.listdir("final/poly/" + str(sw) + "/")
+                    files_in_folder = os.listdir("final/" + name_kernel + "/" + str(sw) + "/")
                     if(sname in files_in_folder):
                         print("file already exist")
                         continue
@@ -240,8 +241,8 @@ def main():
                         print(dict)
                         try:
                             combined_rgb = image
-                            imsave("final/poly/" + str(sw) + "/" + sname, combined_rgb)
-                            with open("final/poly_pickle/" + str(sw) + "/" + sname[0:-4] + ".pkl", 'wb') as f:
+                            imsave("final/" + name_kernel + "/" + str(sw) + "/" + sname, combined_rgb)
+                            with open("final/" + name_kernel + "_pickle/" + str(sw) + "/" + sname[0:-4] + ".pkl", 'wb') as f:
                                 pickle.dump(dict, f)
 
                         except:
