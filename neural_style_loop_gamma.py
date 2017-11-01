@@ -22,13 +22,13 @@ ITERATIONS = 500
 PRINT_ITERATIONS = 10
 VGG_PATH = 'imagenet-vgg-verydeep-197.mat'
 POOLING = 'max'
-RANGE_SIGMA = [100, 500, 1000, 2000, , 5000]
+RANGE_SIGMA = [5000, 10000, 15000, 20000, 25000, 30000]
 # RANGE_SW = [1e19, 5e19, 1e20,5e20, 1e21, 5e21]
-RANGE_SW = [1e10, 1e11, 1e12, 1e13]  # [1e-10, 1e-15, 1e-20, 1e-25, 1e-30, 1e-35]
+RANGE_SW = [1e19, 5e19, 1e20, 5e20, 1e21]  # [1e-10, 1e-15, 1e-20, 1e-25, 1e-30, 1e-35]
 # CONTENT_IMAGES = sorted(os.listdir("examples/content"))
 STYLE_IMAGES = sorted(os.listdir("examples/style"))
-KERNEL = 3
-g = 1.1
+KERNEL = 4
+g = 1.2
 # TARGET_WIDTH = 256
 
 
